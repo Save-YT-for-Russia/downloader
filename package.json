@@ -1,0 +1,12 @@
+{
+  "name": "Downloader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "lowdb": "^7.0.1",
+    "pg": "^8.12.0",
+    "sequelize": "^6.37.3",
+    "telebot": "^1.4.1"
+  }
+}
