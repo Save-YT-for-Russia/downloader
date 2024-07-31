@@ -24,9 +24,6 @@ const messages = [];
 const emitter = new EventEmitter();
 let isBusy = false;
 
-// let pathToStoreFiles = './' // путь, где будут лежать скаченные файлы
-
-
 // main
 /* Это для общения с кожанным
 bot.on(['/start', '/hello'], async (msg) => {
@@ -65,23 +62,24 @@ emitter.on('upload_data', (id, filename) => {
     let copyCommandStdErrData = ''
 
     console.log('...upload...', filename)
-    // // закачиваем файл на "сервер"
-    // const copyCommand = spawn('scp', [`"${filename}"`, "rom@192.168.1.3:/tmp"], { shell: true });
-    // copyCommand.stdout.on('data', (data) => {
-    //     console.log(`stdout ${data}`);
-    //     copyCommandStdOutData += data;
-    // });
-    // copyCommand.stderr.on('data', (data) => {
-    //     console.log(`stderr ${data}`);
-    //     copyCommandStdErrData += data;
-    // });
-    // // уведомляем о выполненной задаче
-    // if (copyCommandStdErrData.length > 0) {
-    //     // тут тогда перекачать
-    //     emitter.emit('upload_data', id, filename)
-    // } else {
-    //     bot.sendMessage(`{"id":"${id}", "status":"done"}`)
-    // }
+    // закачиваем файл на "сервер"
+    const copyCommand = spawn('scp', [filename, "user@192.168.1.2:/tmp"], { shell: true, cwd: './' });
+    copyCommand.stdout.on('data', (data) => {
+        console.log(`stdout ${data}`);
+        copyCommandStdOutData += data;
+    });
+    copyCommand.stderr.on('data', (data) => {
+        console.log(`stderr ${data}`);
+        copyCommandStdErrData += data;
+    });
+    // уведомляем о выполненной задаче
+    if (copyCommandStdErrData.length > 0) {
+        // тут тогда перекачать
+        emitter.emit('upload_data', id, filename)
+    } else {
+        
+        bot.sendMessage('-1002238341419',`{"id":"${id}", "status":"done"}`) // первый параметр - чат куда слать уведомления
+    }
 })
 
 
@@ -104,7 +102,8 @@ emitter.on('new_link', async () => {
             }
 
             // выкачиваем
-            const child = spawn('yt-dlp', [`"${data.url}"`], { shell: true });
+            // console.log(`-o ${data.id}.%(ext)s`); process.exit(1)
+            const child = spawn('yt-dlp', [`-o ${data.id}`, '--force-overwrites', `"${data.url}"`], { shell: true });
 
             child.stdout.on('data', (data) => {
                 console.log(`stdout ${data}`);
@@ -117,19 +116,13 @@ emitter.on('new_link', async () => {
             child.on('exit', (exitCode, killSignal) => { // отлавливаем окончание работы
                 if (exitCode === 0) { // всё хорошо
                     if (stdOutData.length > 0) {
-                        // console.log('===== EOW', stdOutData.length)
                         messages.shift() // удаляем выкаченное из массива ссылок
-                        //     console.log('......... EOW:', messages)
 
                         // разбираем накопленный stdout чтобы получить имя скаченного файла
                         const tmp = stdOutData.match(getResultfileNameRegex)
-                        console.log('...', data.id, '\n',tmp[1])
-                        emitter.emit('upload_data', data.id, tmp[1])
+                        console.log('...', data.id, '\n', tmp[1])
+                        emitter.emit('upload_data', data.id, `${data.id}.mp4`)
 
-                        // try {
-                        // } catch(error) {
-                        //     console.log('!!!!!!!! error', error)
-                        // }
                         isBusy = false // меняем статус
                         if (messages.length > 0) { // если ещё остались ссылки - вызываем выкачивалку
                             emitter.emit('new_link')
@@ -142,7 +135,7 @@ emitter.on('new_link', async () => {
                     }
                 } else { // какая-то ошибка - перезапускаем
                     isBusy = false // меняем статус
-                    emitter.emit('new_link', msg)//, isBusy, messages)
+                    emitter.emit('new_link')//, isBusy, messages)
                     return
                 }
             })
@@ -157,7 +150,7 @@ emitter.on('new_link', async () => {
 // Это для общения роботов
 bot.on(/.*youtube.com\/.*/, (msg) => {
     // return msg.reply.photo('http://thecatapi.com/api/images/get');
-    console.log(msg.text)
+    console.log(msg)
     messages.push(msg.text)
     emitter.emit('new_link')
 });
@@ -168,5 +161,3 @@ bot.start()
     id - идентификатор на "сервере"
     url - url на видео
 */
-
-//!!!! TODO: получить название скаченного видео
