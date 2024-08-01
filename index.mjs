@@ -1,3 +1,5 @@
+// FAQ: https://www.reddit.com/user/krimsen/comments/uzpaaq/ytdlp_faq_and_basic_operation_tips_and_tricks/
+
 const TELEGRAM_BOT_TOKEN = '497682600:AAEvCZCHXlRDM-lS3QHm571FID6d5_r3gsw'
 
 import TeleBot from "telebot";
@@ -25,38 +27,6 @@ const emitter = new EventEmitter();
 let isBusy = false;
 
 // main
-/* Это для общения с кожанным
-bot.on(['/start', '/hello'], async (msg) => {
-    let message = {};
-    message.userID = msg.from.id;
-    message.firstName = msg.from.first_name;
-    message.lastName = msg.from.last_name;
-    message.userName = msg.from.username; // ник
-    message.messageDate = msg.date;
-    message.messageText = msg.text;
-    message.messageChat = msg.chat.id;
-
-    const { users } = db.data;
-    const userData =  users.find((users) => users.tgId === message.userID);
-    const today = new Date();
-    if (!userData) { // новый пользователь
-        await db.update(({ users }) => users.push({
-            tgId: message.userID,
-            firstName: message.firstName,
-            lastName: message.lastName,
-            userName: message.userName,
-            registeredAt: today,
-            lastAccessAt: today
-        }))
-        msg.reply.text('Welcome!')
-    } else { //уже зареганый
-        userData.lastAccessAt = today
-        db.update((userData) => {})
-        msg.reply.text('Again')
-    }
-
-})
-*/
 emitter.on('upload_data', (id, filename) => {
     let copyCommandStdOutData = ''
     let copyCommandStdErrData = ''
@@ -77,11 +47,9 @@ emitter.on('upload_data', (id, filename) => {
         // тут тогда перекачать
         emitter.emit('upload_data', id, filename)
     } else {
-        
         bot.sendMessage('-1002238341419',`{"id":"${id}", "status":"done"}`) // первый параметр - чат куда слать уведомления
     }
 })
-
 
 emitter.on('new_link', async () => {
     if (!isBusy) { // сервис не занят
@@ -95,7 +63,7 @@ emitter.on('new_link', async () => {
             try {
                 data = JSON.parse(messages[0])
             } catch (error) {
-                console.log('Error in JSON:', msg, error)
+                console.log('Error in JSON:', error)
                 messages.shift() // удаляем ошибочное из массива ссылок
                 emitter.emit('new_link')
                 return
@@ -146,6 +114,10 @@ emitter.on('new_link', async () => {
     }
 })
 
+//test
+bot.on('message', (msg) => {
+    console.log(msg)
+})
 
 // Это для общения роботов
 bot.on(/.*youtube.com\/.*/, (msg) => {
